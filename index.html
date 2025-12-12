@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Atrangi Zaykein - Food Ordering</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Inter:wght@300;400;600&family=Baloo+2:wght@400;600;700&display=swap");
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Inter", sans-serif;
+        font-size: 14px;
+        background: radial-gradient(
+          circle at top,
+          #1c0f34 0%,
+          #080711 45%,
+          #050508 100%
+        );
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+        overflow-x: hidden;
+        position: relative;
+        color: #fff;
+      }
+
+      /* Soft party blobs + subtle confetti dots */
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background: radial-gradient(
+            circle at 15% 20%,
+            rgba(255, 107, 150, 0.18) 0%,
+            transparent 55%
+          ),
+          radial-gradient(
+            circle at 85% 70%,
+            rgba(255, 200, 120, 0.18) 0%,
+            transparent 55%
+          ),
+          radial-gradient(
+            circle at 50% 90%,
+            rgba(120, 150, 255, 0.18) 0%,
+            transparent 55%
+          ),
+          radial-gradient(
+            circle at 0 0,
+            rgba(255, 255, 255, 0.08) 1px,
+            transparent 0
+          ),
+          radial-gradient(
+            circle at 10px 10px,
+            rgba(255, 255, 255, 0.08) 1px,
+            transparent 0
+          );
+        background-size: 100% 100%, 100% 100%, 100% 100%, 24px 24px, 24px 24px;
+        mix-blend-mode: screen;
+        opacity: 0.7;
+        pointer-events: none;
+      }
+
+      .container {
+        background: rgba(15, 12, 28, 0.9);
+        backdrop-filter: blur(22px);
+        border-radius: 24px;
+        padding: 30px 26px 32px;
+        max-width: 520px;
+        width: 100%;
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.75),
+          0 0 0 1px rgba(255, 255, 255, 0.06);
+        position: relative;
+        animation: slideIn 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+        overflow: hidden;
+        transform-origin: top center;
+      }
+
+      .container::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          135deg,
+          rgba(255, 202, 120, 0.18),
+          rgba(255, 107, 150, 0.18)
+        );
+        opacity: 0.35;
+        mix-blend-mode: soft-light;
+        pointer-events: none;
+      }
+
+      .top-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 14px;
+        position: relative;
+        z-index: 1;
+      }
+
+      .chip {
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 0.7rem;
+        font-weight: 500;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .chip span.dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        background: #ffce63;
+        box-shadow: 0 0 8px rgba(255, 206, 99, 0.8);
+      }
+
+      .mini-text {
+        font-size: 0.7rem;
+        color: rgba(255, 255, 255, 0.7);
+      }
+
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateY(40px) scale(0.97);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+      }
+
+      h1 {
+        text-align: center;
+        font-family: "Baloo 2", system-ui;
+        color: #fff;
+        font-size: 2.1rem;
+        font-weight: 700;
+        margin-bottom: 4px;
+        letter-spacing: 0.5px;
+      }
+
+      .subtitle {
+        text-align: center;
+        color: rgba(255, 255, 255, 0.72);
+        margin-bottom: 22px;
+        font-size: 0.9rem;
+        font-weight: 300;
+      }
+
+      .subtitle span {
+        color: #ffce63;
+        font-weight: 500;
+      }
+
+      .name-input {
+        width: 100%;
+        padding: 12px 14px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 12px;
+        font-size: 0.95rem;
+        font-family: "Inter", sans-serif;
+        margin-bottom: 22px;
+        transition: all 0.25s;
+        background: rgba(255, 255, 255, 0.03);
+        color: #fff;
+      }
+
+      .name-input::placeholder {
+        color: rgba(255, 255, 255, 0.45);
+      }
+
+      .name-input:focus {
+        outline: none;
+        border-color: rgba(255, 206, 99, 0.9);
+        background: rgba(255, 255, 255, 0.06);
+        box-shadow: 0 0 0 2px rgba(255, 206, 99, 0.2),
+          0 0 18px rgba(255, 206, 99, 0.4);
+      }
+
+      .menu-item {
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 18px;
+        padding: 18px 16px;
+        margin-bottom: 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: all 0.25s;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .menu-item::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          135deg,
+          rgba(255, 202, 120, 0.16),
+          transparent 50%,
+          rgba(255, 107, 150, 0.16)
+        );
+        opacity: 0;
+        transition: opacity 0.25s;
+      }
+
+      .menu-item:hover {
+        transform: translateY(-2px);
+        background: rgba(255, 255, 255, 0.06);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+      }
+
+      .menu-item:hover::before {
+        opacity: 1;
+      }
+
+      .item-info {
+        flex: 1;
+        position: relative;
+        z-index: 1;
+      }
+
+      .item-name {
+        font-size: 1.05rem;
+        font-weight: 600;
+        color: #fff;
+        margin-bottom: 2px;
+        letter-spacing: 0.2px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .item-name span.emoji {
+        font-size: 1.2rem;
+      }
+
+      .item-price {
+        font-size: 0.8rem;
+        color: rgba(255, 255, 255, 0.7);
+        font-weight: 300;
+      }
+
+      .item-note {
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.6);
+        margin-top: 4px;
+      }
+
+      .quantity-control {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        position: relative;
+        z-index: 1;
+      }
+
+      .qty-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 10px;
+        background: radial-gradient(
+          circle at top left,
+          rgba(255, 255, 255, 0.18),
+          rgba(255, 255, 255, 0.06)
+        );
+        color: #fff;
+        font-size: 1.1rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.18s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid rgba(255, 255, 255, 0.22);
+      }
+
+      .qty-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 0 12px rgba(255, 206, 99, 0.7);
+        border-color: rgba(255, 206, 99, 0.9);
+      }
+
+      .qty-btn:active {
+        transform: scale(0.93);
+      }
+
+      .quantity {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #fff;
+        min-width: 22px;
+        text-align: center;
+      }
+
+      .order-btn {
+        width: 100%;
+        padding: 15px 18px;
+        border: none;
+        border-radius: 14px;
+        background-image: linear-gradient(135deg, #ffce63, #ff9a7b, #ff6b9f);
+        color: #3b1230;
+        font-size: 0.98rem;
+        font-weight: 700;
+        font-family: "Inter", sans-serif;
+        cursor: pointer;
+        margin-top: 20px;
+        transition: all 0.25s;
+        box-shadow: 0 14px 35px rgba(0, 0, 0, 0.7),
+          0 0 22px rgba(255, 140, 120, 0.75);
+        letter-spacing: 0.6px;
+      }
+
+      .order-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 18px 45px rgba(0, 0, 0, 0.9),
+          0 0 30px rgba(255, 140, 120, 0.9);
+      }
+
+      .order-btn:active {
+        transform: translateY(0);
+      }
+
+      .order-btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+      }
+
+      #menuList {
+        position: relative;
+        z-index: 1;
+      }
+
+      /* MODAL / scratch card */
+      .modal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: radial-gradient(circle at top, rgba(0, 0, 0, 0.9), #030308);
+        backdrop-filter: blur(18px);
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        animation: fadeIn 0.35s;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      .scratch-card {
+        background: rgba(18, 13, 34, 0.96);
+        border-radius: 22px;
+        padding: 30px 24px 26px;
+        max-width: 420px;
+        width: 90%;
+        text-align: center;
+        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12),
+          0 26px 60px rgba(0, 0, 0, 0.9);
+        animation: popIn 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+        position: relative;
+        overflow: hidden;
+        transform-origin: center;
+      }
+
+      .scratch-card::before {
+        content: "";
+        position: absolute;
+        top: 10px;
+        left: 16px;
+        font-size: 0.7rem;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.7);
+      }
+
+      .scratch-card::after {
+        content: "";
+        position: absolute;
+        top: 8px;
+        right: 18px;
+        font-size: 1.1rem;
+        opacity: 0.9;
+      }
+
+      @keyframes popIn {
+        from {
+          opacity: 0;
+          transform: scale(0.9) translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1) translateY(0);
+        }
+      }
+
+      .scratch-title {
+        font-family: "Baloo 2", system-ui;
+        font-size: 1.3rem;
+        color: #fff;
+        margin-bottom: 20px;
+      }
+
+      .canvas-container {
+        position: relative;
+        display: inline-block;
+        margin: 14px 0 12px;
+      }
+
+      canvas {
+        border-radius: 16px;
+        cursor: crosshair;
+        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2),
+          0 14px 40px rgba(0, 0, 0, 0.9);
+      }
+
+      .scratch-hint {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 0.8rem;
+        margin-top: 10px;
+        font-weight: 300;
+        animation: pulse 1.4s infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.45;
+        }
+      }
+
+      .close-btn {
+        margin-top: 16px;
+        padding: 10px 26px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.04);
+        color: #fff;
+        font-size: 0.85rem;
+        font-weight: 500;
+        font-family: "Inter", sans-serif;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: none;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .close-btn:hover {
+        background: rgba(255, 255, 255, 0.09);
+        box-shadow: 0 0 16px rgba(255, 255, 255, 0.25);
+      }
+
+      .price-breakdown {
+        display: none;
+        margin-top: 18px;
+        text-align: left;
+        background: rgba(8, 7, 18, 0.96);
+        border-radius: 14px;
+        padding: 16px 16px 14px;
+        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.18),
+          0 12px 26px rgba(0, 0, 0, 0.85);
+        font-size: 0.9rem;
+      }
+
+      .breakdown-item {
+        display: flex;
+        justify-content: space-between;
+        margin: 6px 0;
+        color: rgba(255, 255, 255, 0.9);
+        font-weight: 300;
+      }
+
+      .breakdown-total {
+        border-top: 1px solid rgba(255, 255, 255, 0.25);
+        padding-top: 10px;
+        margin-top: 10px;
+        font-weight: 600;
+        font-size: 1rem;
+      }
+
+      .confetti {
+        position: fixed;
+        width: 7px;
+        height: 7px;
+        border-radius: 3px;
+        animation: confetti-fall 3s linear forwards;
+        pointer-events: none;
+        z-index: 2001;
+      }
+
+      @keyframes confetti-fall {
+        to {
+          transform: translateY(100vh) rotate(360deg);
+          opacity: 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="top-row">
+        <div class="chip">
+          <span class="dot"></span>
+          <span id="festName">Flavours Fusion 2025</span>
+        </div>
+        <div class="mini-text">Pick snacks + Scratch + Pay surprise price</div>
+      </div>
+
+      <h1 id="stallName">Atrangi Zaykein</h1>
+      <p class="subtitle">
+        Order your favourites & <span>scratch</span> to reveal how much you
+        actually pay
+      </p>
+
+      <input
+        type="text"
+        class="name-input"
+        id="userName"
+        placeholder="Your name"
+      />
+
+      <div id="menuList" aria-live="polite">
+        <p class="mini-text">Loading menu from Excel…</p>
+      </div>
+
+      <button class="order-btn" onclick="placeOrder()">Place Order</button>
+    </div>
+
+    <div class="modal" id="modal">
+      <div class="scratch-card">
+        <h2 class="scratch-title">Scratch to Reveal Your Total Amount</h2>
+        <div class="canvas-container">
+          <canvas id="scratchCanvas" width="300" height="200"></canvas>
+        </div>
+        <p class="scratch-hint">Use your mouse / finger to scratch</p>
+        <button class="close-btn" id="closeBtn" onclick="handleDetailsButton()">
+          View Details
+        </button>
+        <div class="price-breakdown" id="breakdown"></div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script>
+      const menuListEl = document.getElementById("menuList");
+      const orderBtn = document.querySelector(".order-btn");
+      const stallNameEl = document.getElementById("stallName");
+      const festNameEl = document.getElementById("festName");
+      let menuItems = [];
+      let userIP = "Unknown";
+      let canShowDetails = false;
+
+      function changeQty(key, delta) {
+        const item = menuItems.find((i) => i.key === key);
+        if (!item) return;
+        item.qty = Math.max(0, item.qty + delta);
+        const qtyEl = document.getElementById(`qty-${key}`);
+        if (qtyEl) qtyEl.textContent = item.qty;
+      }
+
+      function createConfetti() {
+        const colors = ["#ffce63", "#ff9a7b", "#ff6b9f", "#c695ff", "#7fd9ff"];
+        for (let i = 0; i < 80; i++) {
+          setTimeout(() => {
+            const confetti = document.createElement("div");
+            confetti.className = "confetti";
+            confetti.style.left = Math.random() * 100 + "%";
+            confetti.style.top = "-10px";
+            confetti.style.background =
+              colors[Math.floor(Math.random() * colors.length)];
+            confetti.style.animationDelay = Math.random() * 0.3 + "s";
+            confetti.style.animationDuration = Math.random() * 1 + 2 + "s";
+            document.body.appendChild(confetti);
+            setTimeout(() => confetti.remove(), 3500);
+          }, i * 25);
+        }
+      }
+
+      function getRandomPrice(max) {
+        const random = Math.random();
+        if (random < 0.02) return 0; // lucky treat
+        if (random < 0.15) return Math.floor(Math.random() * (max * 0.3));
+        if (random < 0.4)
+          return Math.floor(
+            Math.random() * (max * 0.5 - max * 0.3) + max * 0.3
+          );
+        return Math.floor(Math.random() * (max - max * 0.5) + max * 0.5);
+      }
+
+      async function fetchUserIP() {
+        try {
+          const res = await fetch("https://api.ipify.org?format=json");
+          if (res.ok) {
+            const data = await res.json();
+            userIP = data.ip || userIP;
+          }
+        } catch (error) {
+          console.warn("Could not fetch user IP", error);
+        }
+      }
+
+      async function sendOrderToServer(breakdown, totalPrice) {
+        const name = document.getElementById("userName").value.trim();
+        const payload = {
+          name,
+          totalPrice,
+          items: breakdown.map((item) => ({
+            key: item.key,
+            name: item.name,
+            emoji: item.emoji,
+            qty: item.qty,
+            price: item.price,
+            maxPrice: item.maxPrice,
+          })),
+          clientIp: userIP,
+          orderedAt: new Date().toISOString(),
+        };
+
+        try {
+          const response = await fetch("/api/orders", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          if (!response.ok) {
+            throw new Error(`Server responded with ${response.status}`);
+          }
+          return await response.json();
+        } catch (error) {
+          console.error("Could not record order on server", error);
+          alert(
+            "We could not save your order right now. Please try again or contact the stall."
+          );
+          return null;
+        }
+      }
+
+      function placeOrder() {
+        const name = document.getElementById("userName").value.trim();
+        const totalItems = menuItems.reduce((sum, item) => sum + item.qty, 0);
+
+        if (!name) {
+          alert("Please enter your name so we know who is ordering!");
+          return;
+        }
+
+        if (totalItems === 0) {
+          alert("Add at least one item to start the fun!");
+          return;
+        }
+
+        setTimeout(showScratchCard, 300);
+      }
+
+      async function showScratchCard() {
+        const modal = document.getElementById("modal");
+        modal.style.display = "flex";
+        const breakdownEl = document.getElementById("breakdown");
+        const closeBtn = document.getElementById("closeBtn");
+        breakdownEl.style.display = "none";
+        closeBtn.style.display = "none";
+        closeBtn.textContent = "View Details";
+        canShowDetails = false;
+
+        // reset canvas to avoid duplicate listeners
+        const canvas = document.getElementById("scratchCanvas");
+        const newCanvas = canvas.cloneNode(true);
+        canvas.parentNode.replaceChild(newCanvas, canvas);
+        const ctx = newCanvas.getContext("2d", { willReadFrequently: true });
+
+        let totalPrice = 0;
+        const breakdown = [];
+
+        menuItems.forEach((item) => {
+          if (item.qty > 0) {
+            const itemTotal = item.qty * getRandomPrice(item.maxPrice);
+            totalPrice += itemTotal;
+            breakdown.push({ ...item, price: itemTotal });
+          }
+        });
+
+        const saved = await sendOrderToServer(breakdown, totalPrice);
+        if (!saved) return;
+
+        // visible cover
+        const gradient = ctx.createLinearGradient(
+          0,
+          0,
+          newCanvas.width,
+          newCanvas.height
+        );
+        gradient.addColorStop(0, "#ffce63");
+        gradient.addColorStop(0.5, "#ff9a7b");
+        gradient.addColorStop(1, "#ff6b9f");
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, newCanvas.width, newCanvas.height);
+
+        ctx.fillStyle = "rgba(17, 10, 24, 0.55)";
+        ctx.fillRect(0, 0, newCanvas.width, newCanvas.height);
+
+        // ctx.fillStyle = "#fff";
+        // ctx.font = "600 16px Inter";
+        // ctx.textAlign = "center";
+        // ctx.fillText(
+        //   "SCRATCH TO REVEAL AMOUNT",
+        //   newCanvas.width / 2,
+        //   newCanvas.height / 2 - 4
+        // );
+        // ctx.font = "600 15px Inter";
+        // ctx.textAlign = "center";
+        // ctx.fillText(
+        //   "your total amount",
+        //   newCanvas.width / 2,
+        //   newCanvas.height / 2
+        // );
+
+        // hidden amount
+        const hiddenCanvas = document.createElement("canvas");
+        hiddenCanvas.width = newCanvas.width;
+        hiddenCanvas.height = newCanvas.height;
+        const hiddenCtx = hiddenCanvas.getContext("2d");
+
+        hiddenCtx.fillStyle = "#0a070f";
+        hiddenCtx.fillRect(0, 0, newCanvas.width, newCanvas.height);
+        hiddenCtx.fillStyle = "#ffce63";
+        hiddenCtx.font = '800 86px "Baloo 2", "Inter", sans-serif';
+        hiddenCtx.textAlign = "center";
+        hiddenCtx.textBaseline = "middle";
+        hiddenCtx.fillText(
+          `₹${totalPrice}`,
+          newCanvas.width / 2,
+          newCanvas.height / 2
+        );
+
+        let isScratching = false;
+        let scratchedPercent = 0;
+        let isRevealed = false;
+        let lastPoint = null;
+        const revealThreshold = 35;
+        const scratchRadius = 24;
+
+        function scratch(e) {
+          if (!isScratching || isRevealed) return;
+
+          const rect = newCanvas.getBoundingClientRect();
+          const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+          const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+          if (clientX == null || clientY == null) return;
+
+          const x = clientX - rect.left;
+          const y = clientY - rect.top;
+
+          ctx.globalCompositeOperation = "destination-out";
+          ctx.lineCap = "round";
+          ctx.lineJoin = "round";
+          ctx.lineWidth = scratchRadius * 2;
+          if (lastPoint) {
+            ctx.beginPath();
+            ctx.moveTo(lastPoint.x, lastPoint.y);
+            ctx.lineTo(x, y);
+            ctx.stroke();
+          } else {
+            ctx.beginPath();
+            ctx.arc(x, y, scratchRadius, 0, 2 * Math.PI);
+            ctx.fill();
+          }
+          lastPoint = { x, y };
+
+          const imageData = ctx.getImageData(
+            0,
+            0,
+            newCanvas.width,
+            newCanvas.height
+          );
+          let transparent = 0;
+          for (let i = 3; i < imageData.data.length; i += 4) {
+            if (imageData.data[i] === 0) transparent++;
+          }
+
+          scratchedPercent = (transparent / (imageData.data.length / 4)) * 100;
+
+          if (scratchedPercent >= revealThreshold) {
+            ctx.clearRect(0, 0, newCanvas.width, newCanvas.height);
+            ctx.globalCompositeOperation = "source-over";
+            ctx.drawImage(hiddenCanvas, 0, 0);
+
+            isRevealed = true;
+            isScratching = false;
+            lastPoint = null;
+            newCanvas.style.pointerEvents = "none";
+            newCanvas.style.cursor = "default";
+            document.querySelector(".scratch-hint").style.display = "none";
+            const closeBtn = document.getElementById("closeBtn");
+            closeBtn.style.display = "inline-block";
+            closeBtn.textContent = "View Details";
+
+            createConfetti();
+
+            let breakdownHTML = "";
+            breakdown.forEach((item) => {
+              breakdownHTML += `
+                            <div class="breakdown-item">
+                                <span>${item.emoji} ${item.name} × ${item.qty}</span>
+                                <span>₹${item.price}</span>
+                            </div>
+                        `;
+            });
+            breakdownHTML += `
+                        <div class="breakdown-item breakdown-total">
+                            <span>Total Amount</span>
+                            <span>₹${totalPrice}</span>
+                        </div>
+                    `;
+            const breakdownEl = document.getElementById("breakdown");
+            breakdownEl.innerHTML = breakdownHTML;
+            breakdownEl.style.display = "none";
+            canShowDetails = true;
+          }
+        }
+
+        newCanvas.addEventListener("mousedown", () => {
+          if (isRevealed) return;
+          isScratching = true;
+        });
+        newCanvas.addEventListener("mouseup", () => {
+          isScratching = false;
+          lastPoint = null;
+        });
+        newCanvas.addEventListener("mouseleave", () => {
+          isScratching = false;
+          lastPoint = null;
+        });
+        newCanvas.addEventListener("mousemove", scratch);
+
+        newCanvas.addEventListener("touchstart", (e) => {
+          e.preventDefault();
+          if (isRevealed) return;
+          isScratching = true;
+        });
+        newCanvas.addEventListener("touchend", () => {
+          isScratching = false;
+          lastPoint = null;
+        });
+        newCanvas.addEventListener("touchcancel", () => {
+          isScratching = false;
+          lastPoint = null;
+        });
+        newCanvas.addEventListener("touchmove", (e) => {
+          e.preventDefault();
+          scratch(e);
+        });
+      }
+
+      function closeModal() {
+        const btn = document.getElementById("closeBtn");
+        document.getElementById("modal").style.display = "none";
+        menuItems.forEach((item) => (item.qty = 0));
+        document
+          .querySelectorAll(".quantity")
+          .forEach((el) => (el.textContent = "0"));
+        document.getElementById("userName").value = "";
+        document.getElementById("breakdown").style.display = "none";
+        document.querySelector(".scratch-hint").style.display = "block";
+        btn.style.display = "none";
+        btn.textContent = "View Details";
+        canShowDetails = false;
+      }
+
+      function handleDetailsButton() {
+        const breakdownEl = document.getElementById("breakdown");
+        const btn = document.getElementById("closeBtn");
+        if (!canShowDetails) return;
+
+        if (breakdownEl.style.display !== "block") {
+          breakdownEl.style.display = "block";
+          btn.textContent = "Close";
+          return;
+        }
+
+        closeModal();
+      }
+
+      function renderMenu() {
+        menuListEl.innerHTML = "";
+        if (!menuItems.length) {
+          menuListEl.innerHTML =
+            '<p class="mini-text">No items found in the Excel file.</p>';
+          orderBtn.disabled = true;
+          return;
+        }
+
+        orderBtn.disabled = false;
+        menuItems.forEach((item) => {
+          const wrapper = document.createElement("div");
+          wrapper.className = "menu-item";
+          wrapper.innerHTML = `
+              <div class="item-info">
+                <div class="item-name">
+                  <span class="emoji">${item.emoji}</span>
+                  <span>${item.name}</span>
+                </div>
+                <div class="item-price">Max ₹${item.maxPrice}</div>
+                <div class="item-note">${item.description}</div>
+              </div>
+              <div class="quantity-control">
+                <button class="qty-btn" data-key="${item.key}" data-delta="-1">−</button>
+                <span class="quantity" id="qty-${item.key}">0</span>
+                <button class="qty-btn" data-key="${item.key}" data-delta="1">+</button>
+              </div>
+            `;
+          menuListEl.appendChild(wrapper);
+        });
+
+        menuListEl.querySelectorAll(".qty-btn").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const key = btn.getAttribute("data-key");
+            const delta = Number(btn.getAttribute("data-delta"));
+            changeQty(key, delta);
+          });
+        });
+      }
+
+      async function loadMenuFromExcel() {
+        orderBtn.disabled = true;
+        try {
+          const response = await fetch("menu-items.xlsx");
+          if (!response.ok) {
+            throw new Error("Could not load Excel file");
+          }
+          const data = new Uint8Array(await response.arrayBuffer());
+          const workbook = XLSX.read(data, { type: "array" });
+          const sheet = workbook.Sheets[workbook.SheetNames[0]];
+          const raw = XLSX.utils.sheet_to_json(sheet, {
+            header: 1,
+            defval: "",
+          });
+
+          if (!raw.length) {
+            throw new Error("Sheet is empty");
+          }
+
+          const metaRow = raw[0] || [];
+          const headerRow = raw[1] || [];
+          const dataRows = raw.slice(2);
+
+          if (metaRow[0]) stallNameEl.textContent = metaRow[0];
+          if (metaRow[1]) festNameEl.textContent = metaRow[1];
+
+          const headerMap = headerRow.map((h) =>
+            String(h || "")
+              .trim()
+              .toLowerCase()
+          );
+
+          menuItems = dataRows
+            .map((row, index) => {
+              const getVal = (key) => {
+                const colIndex = headerMap.indexOf(key);
+                return colIndex >= 0 ? row[colIndex] : "";
+              };
+              const name = getVal("name") || `Item ${index + 1}`;
+              const safeKey =
+                getVal("key") ||
+                name.toLowerCase().replace(/[^a-z0-9]+/g, "-") ||
+                `item-${index + 1}`;
+              return {
+                key: safeKey,
+                emoji: getVal("emoji") || "🍽️",
+                name,
+                description:
+                  getVal("description") || "Tasty and ready to serve.",
+                maxPrice: Number(getVal("maxprice")) || 0,
+                qty: 0,
+              };
+            })
+            .filter((item) => item.name);
+
+          renderMenu();
+        } catch (error) {
+          console.error(error);
+          menuListEl.innerHTML =
+            '<p class="mini-text">Unable to load the Excel menu. Please refresh.</p>';
+        }
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        fetchUserIP();
+        loadMenuFromExcel();
+      });
+    </script>
+  </body>
+</html>
