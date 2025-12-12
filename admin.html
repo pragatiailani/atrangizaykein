@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FoodFest Admin</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@400;500;600&display=swap");
+
+      :root {
+        --bg: #0b132b;
+        --panel: rgba(19, 30, 53, 0.82);
+        --accent: #ffb703;
+        --accent-2: #8ecae6;
+        --text: #edf2f7;
+        --muted: #94a3b8;
+        --border: rgba(255, 255, 255, 0.08);
+        --danger: #f87171;
+        --success: #34d399;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Manrope", system-ui, -apple-system, sans-serif;
+        background: radial-gradient(circle at 20% 20%, #102040, #060b17 60%),
+          radial-gradient(circle at 80% 0%, rgba(255, 183, 3, 0.18), transparent 35%),
+          var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        padding: 32px 20px 48px;
+      }
+
+      h1 {
+        font-family: "Space Grotesk", system-ui, sans-serif;
+        letter-spacing: 0.02em;
+        margin: 0 0 10px;
+        font-size: 28px;
+      }
+
+      .subtitle {
+        color: var(--muted);
+        margin-bottom: 28px;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 18px;
+        align-items: start;
+      }
+
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        padding: 18px;
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4),
+          0 0 0 1px rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(16px);
+      }
+
+      .panel h2 {
+        margin: 0 0 6px;
+        font-family: "Space Grotesk", system-ui, sans-serif;
+        font-size: 20px;
+      }
+
+      .panel small {
+        color: var(--muted);
+      }
+
+      .toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin: 12px 0 16px;
+      }
+
+      input,
+      textarea {
+        width: 100%;
+        padding: 10px 12px;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.02);
+        color: var(--text);
+        font-family: inherit;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 4px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .form-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+
+      button {
+        border: none;
+        border-radius: 10px;
+        padding: 10px 14px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.2s;
+      }
+
+      button.primary {
+        background: linear-gradient(135deg, #ffb703, #fb8500);
+        color: #0f172a;
+        box-shadow: 0 10px 30px rgba(251, 133, 0, 0.35);
+      }
+
+      button.secondary {
+        background: rgba(255, 255, 255, 0.06);
+        color: var(--text);
+      }
+
+      button.danger {
+        background: rgba(248, 113, 113, 0.12);
+        color: #fecdd3;
+        border: 1px solid rgba(248, 113, 113, 0.25);
+      }
+
+      button:hover {
+        transform: translateY(-1px);
+      }
+
+      button:active {
+        transform: translateY(0);
+      }
+
+      button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+        font-size: 13px;
+      }
+
+      th,
+      td {
+        padding: 10px 8px;
+        text-align: left;
+        border-bottom: 1px solid var(--border);
+      }
+
+      th {
+        color: var(--muted);
+        font-weight: 600;
+        letter-spacing: 0.01em;
+      }
+
+      tr:hover td {
+        background: rgba(255, 255, 255, 0.02);
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 8px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--border);
+        color: var(--text);
+        font-size: 12px;
+      }
+
+      .pill {
+        display: inline-block;
+        padding: 2px 10px;
+        border-radius: 999px;
+        background: rgba(142, 202, 230, 0.2);
+        color: #b9e6ff;
+        font-size: 12px;
+        border: 1px solid rgba(142, 202, 230, 0.3);
+      }
+
+      .status {
+        margin: 14px 0 0;
+        color: var(--muted);
+        font-size: 13px;
+        min-height: 18px;
+      }
+
+      .status.ok {
+        color: var(--success);
+      }
+
+      .status.err {
+        color: var(--danger);
+      }
+
+      .actions {
+        display: flex;
+        gap: 6px;
+      }
+
+      @media (max-width: 600px) {
+        body {
+          padding: 20px 12px 32px;
+        }
+        th,
+        td {
+          padding: 8px 6px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>FoodFest Ops Dashboard</h1>
+      <p class="subtitle">
+        View and maintain Excel-backed menu and order entries in one place.
+      </p>
+    </header>
+
+    <div class="grid">
+      <section class="panel" aria-label="Menu management">
+        <div class="badge">
+          <span>Menu entries</span>
+          <span id="menuMeta" class="pill">Loading...</span>
+        </div>
+        <h2>Menu from Excel</h2>
+        <small>Add new items or edit existing ones. Changes are saved back to
+          <code>menu-items.xlsx</code>.
+        </small>
+
+        <form id="menuForm">
+          <div class="form-row">
+            <div>
+              <label for="fieldKey">Key</label>
+              <input id="fieldKey" name="key" placeholder="tea" required />
+            </div>
+            <div>
+              <label for="fieldEmoji">Emoji</label>
+              <input id="fieldEmoji" name="emoji" placeholder="☕" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div>
+              <label for="fieldName">Name</label>
+              <input id="fieldName" name="name" placeholder="Tea" required />
+            </div>
+            <div>
+              <label for="fieldPrice">Max price</label>
+              <input
+                id="fieldPrice"
+                name="maxPrice"
+                type="number"
+                min="0"
+                step="1"
+                placeholder="30"
+                required
+              />
+            </div>
+          </div>
+          <label for="fieldDescription">Description</label>
+          <textarea
+            id="fieldDescription"
+            name="description"
+            placeholder="Write a short note for customers"
+            rows="2"
+          ></textarea>
+
+          <div class="toolbar">
+            <button class="primary" type="submit" id="submitMenu">
+              Add item
+            </button>
+            <button class="secondary" type="button" id="cancelEdit" disabled>
+              Cancel edit
+            </button>
+            <span class="status" id="menuStatus"></span>
+          </div>
+        </form>
+
+        <table aria-label="Menu table">
+          <thead>
+            <tr>
+              <th>Key</th>
+              <th>Emoji</th>
+              <th>Name</th>
+              <th>Description</th>
+              <th>Max</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="menuTableBody">
+            <tr><td colspan="6">Loading menu…</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="panel" aria-label="Orders management">
+        <div class="badge">
+          <span>Orders</span>
+          <span id="ordersMeta" class="pill">Loading...</span>
+        </div>
+        <h2>Orders from Excel</h2>
+        <small>Inspect or clean up orders logged in
+          <code>orders-log.xlsx</code>.
+        </small>
+
+        <div class="toolbar">
+          <button class="danger" type="button" id="clearOrders">
+            Clear all orders
+          </button>
+          <span class="status" id="ordersStatus"></span>
+        </div>
+
+        <table aria-label="Orders table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Items</th>
+              <th>Total</th>
+              <th>Date Time</th>
+              <th>IP</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="ordersTableBody">
+            <tr><td colspan="7">Loading orders…</td></tr>
+          </tbody>
+        </table>
+      </section>
+    </div>
+
+    <script>
+      const menuTableBody = document.getElementById("menuTableBody");
+      const menuStatus = document.getElementById("menuStatus");
+      const menuMeta = document.getElementById("menuMeta");
+      const submitMenuBtn = document.getElementById("submitMenu");
+      const cancelEditBtn = document.getElementById("cancelEdit");
+      const ordersTableBody = document.getElementById("ordersTableBody");
+      const ordersStatus = document.getElementById("ordersStatus");
+      const ordersMeta = document.getElementById("ordersMeta");
+
+      let menuCache = [];
+      let editingKey = null;
+
+      function setStatus(el, text, type = "") {
+        el.textContent = text || "";
+        el.classList.remove("ok", "err");
+        if (type === "ok") el.classList.add("ok");
+        if (type === "err") el.classList.add("err");
+      }
+
+      function resetForm() {
+        document.getElementById("menuForm").reset();
+        editingKey = null;
+        submitMenuBtn.textContent = "Add item";
+        cancelEditBtn.disabled = true;
+      }
+
+      function renderMenuTable() {
+        if (!menuCache.length) {
+          menuTableBody.innerHTML =
+            '<tr><td colspan="6">No menu items found.</td></tr>';
+          return;
+        }
+        menuTableBody.innerHTML = "";
+        menuCache.forEach((item) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${item.key}</td>
+            <td>${item.emoji || ""}</td>
+            <td>${item.name}</td>
+            <td>${item.description || ""}</td>
+            <td>${item.maxPrice}</td>
+            <td>
+              <div class="actions">
+                <button class="secondary" data-action="edit" data-key="${item.key}">Edit</button>
+                <button class="danger" data-action="delete" data-key="${item.key}">Delete</button>
+              </div>
+            </td>
+          `;
+          menuTableBody.appendChild(tr);
+        });
+      }
+
+      async function loadMenu() {
+        setStatus(menuStatus, "Loading menu…");
+        try {
+          const res = await fetch("/api/menu");
+          if (!res.ok) throw new Error("Failed to fetch menu");
+          const data = await res.json();
+          menuCache = data.items || [];
+          renderMenuTable();
+          menuMeta.textContent = `${data.meta?.stallName || "Menu"} • ${
+            data.items?.length || 0
+          } items`;
+          setStatus(menuStatus, "");
+        } catch (error) {
+          console.error(error);
+          setStatus(menuStatus, "Could not load menu", "err");
+          menuTableBody.innerHTML =
+            '<tr><td colspan="6">Failed to read menu.</td></tr>';
+        }
+      }
+
+      async function handleMenuSubmit(event) {
+        event.preventDefault();
+        const formData = new FormData(event.target);
+        const payload = {
+          key: formData.get("key")?.trim(),
+          emoji: formData.get("emoji")?.trim(),
+          name: formData.get("name")?.trim(),
+          description: formData.get("description")?.trim(),
+          maxPrice: Number(formData.get("maxPrice")) || 0,
+        };
+        submitMenuBtn.disabled = true;
+        cancelEditBtn.disabled = true;
+        setStatus(menuStatus, editingKey ? "Updating item…" : "Adding item…");
+        try {
+          const endpoint = editingKey
+            ? `/api/menu/${encodeURIComponent(editingKey)}`
+            : "/api/menu";
+          const method = editingKey ? "PUT" : "POST";
+          const res = await fetch(endpoint, {
+            method,
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.error || "Request failed");
+          }
+          resetForm();
+          await loadMenu();
+          setStatus(menuStatus, "Saved.", "ok");
+        } catch (error) {
+          console.error(error);
+          setStatus(menuStatus, error.message || "Could not save item", "err");
+        } finally {
+          submitMenuBtn.disabled = false;
+          cancelEditBtn.disabled = false;
+        }
+      }
+
+      function startEdit(key) {
+        const item = menuCache.find((m) => m.key === key);
+        if (!item) return;
+        editingKey = key;
+        document.getElementById("fieldKey").value = item.key;
+        document.getElementById("fieldEmoji").value = item.emoji || "";
+        document.getElementById("fieldName").value = item.name || "";
+        document.getElementById("fieldDescription").value =
+          item.description || "";
+        document.getElementById("fieldPrice").value = item.maxPrice || "";
+        submitMenuBtn.textContent = "Update item";
+        cancelEditBtn.disabled = false;
+        setStatus(menuStatus, `Editing ${item.name || item.key}`);
+      }
+
+      async function deleteMenuItem(key) {
+        if (!confirm(`Delete menu item "${key}"?`)) return;
+        setStatus(menuStatus, `Deleting ${key}…`);
+        try {
+          const res = await fetch(`/api/menu/${encodeURIComponent(key)}`, {
+            method: "DELETE",
+          });
+          if (!res.ok) throw new Error("Failed to delete");
+          if (editingKey === key) resetForm();
+          await loadMenu();
+          setStatus(menuStatus, "Deleted.", "ok");
+        } catch (error) {
+          console.error(error);
+          setStatus(menuStatus, "Could not delete item", "err");
+        }
+      }
+
+      menuTableBody.addEventListener("click", (event) => {
+        const btn = event.target.closest("button");
+        if (!btn) return;
+        const key = btn.getAttribute("data-key");
+        const action = btn.getAttribute("data-action");
+        if (action === "edit") startEdit(key);
+        if (action === "delete") deleteMenuItem(key);
+      });
+
+      document.getElementById("menuForm").addEventListener("submit", handleMenuSubmit);
+      cancelEditBtn.addEventListener("click", resetForm);
+
+      function renderOrdersTable(rows) {
+        if (!rows.length) {
+          ordersTableBody.innerHTML =
+            '<tr><td colspan="7">No orders recorded.</td></tr>';
+          return;
+        }
+        ordersTableBody.innerHTML = "";
+        rows.forEach((order) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${order.orderId}</td>
+            <td>${order.name}</td>
+            <td>${order.items}</td>
+            <td>${order.total}</td>
+            <td>${order.dateTime}</td>
+            <td>${order.ip}</td>
+            <td>
+              <button class="danger" data-order="${order.orderId}">Delete</button>
+            </td>
+          `;
+          ordersTableBody.appendChild(tr);
+        });
+      }
+
+      async function loadOrders() {
+        setStatus(ordersStatus, "Loading orders…");
+        try {
+          const res = await fetch("/api/orders");
+          if (!res.ok) throw new Error("Failed to fetch orders");
+          const data = await res.json();
+          renderOrdersTable(data.rows || []);
+          ordersMeta.textContent = `${data.rows?.length || 0} orders`;
+          setStatus(ordersStatus, "");
+        } catch (error) {
+          console.error(error);
+          setStatus(ordersStatus, "Could not load orders", "err");
+          ordersTableBody.innerHTML =
+            '<tr><td colspan="7">Failed to read orders.</td></tr>';
+        }
+      }
+
+      ordersTableBody.addEventListener("click", async (event) => {
+        const btn = event.target.closest("button[data-order]");
+        if (!btn) return;
+        const orderId = btn.getAttribute("data-order");
+        if (!confirm(`Delete order #${orderId}?`)) return;
+        setStatus(ordersStatus, `Deleting #${orderId}…`);
+        try {
+          const res = await fetch(`/api/orders/${orderId}`, { method: "DELETE" });
+          if (!res.ok) throw new Error("Failed to delete order");
+          await loadOrders();
+          setStatus(ordersStatus, "Deleted.", "ok");
+        } catch (error) {
+          console.error(error);
+          setStatus(ordersStatus, "Could not delete order", "err");
+        }
+      });
+
+      document.getElementById("clearOrders").addEventListener("click", async () => {
+        if (!confirm("Clear ALL orders? This cannot be undone.")) return;
+        setStatus(ordersStatus, "Clearing orders…");
+        try {
+          const res = await fetch("/api/orders", { method: "DELETE" });
+          if (!res.ok) throw new Error("Failed to clear orders");
+          await loadOrders();
+          setStatus(ordersStatus, "Orders cleared.", "ok");
+        } catch (error) {
+          console.error(error);
+          setStatus(ordersStatus, "Could not clear orders", "err");
+        }
+      });
+
+      loadMenu();
+      loadOrders();
+    </script>
+  </body>
+</html>
