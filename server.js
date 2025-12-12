@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
@@ -7,6 +8,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const ORDERS_FILE = path.join(__dirname, "orders-log.xlsx");
 const MENU_FILE = path.join(__dirname, "menu-items.xlsx");
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "";
 
 app.use(express.json());
 app.use(express.static(__dirname));
@@ -179,6 +181,24 @@ app.post("/api/orders", (req, res) => {
   } catch (error) {
     console.error("Failed to append order", error);
     res.status(500).json({ error: "Failed to record order" });
+  }
+});
+
+app.post("/api/auth", (req, res) => {
+  try {
+    const { password = "" } = req.body || {};
+    if (!ADMIN_PASSWORD) {
+      return res
+        .status(500)
+        .json({ error: "Admin password not configured on server" });
+    }
+    if (password === ADMIN_PASSWORD) {
+      return res.json({ ok: true });
+    }
+    res.status(401).json({ error: "Invalid password" });
+  } catch (error) {
+    console.error("Auth error", error);
+    res.status(500).json({ error: "Auth failed" });
   }
 });
 

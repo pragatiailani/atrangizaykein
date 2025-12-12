@@ -211,6 +211,42 @@
         gap: 6px;
       }
 
+      .lock-screen {
+        position: fixed;
+        inset: 0;
+        background: radial-gradient(circle at 20% 20%, rgba(15, 23, 42, 0.92), rgba(6, 8, 20, 0.95)),
+          linear-gradient(135deg, rgba(255, 183, 3, 0.15), rgba(142, 202, 230, 0.12));
+        display: grid;
+        place-items: center;
+        z-index: 999;
+      }
+
+      .lock-card {
+        background: rgba(19, 30, 53, 0.92);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 20px 22px;
+        width: min(420px, 92vw);
+        text-align: center;
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+      }
+
+      .lock-card h2 {
+        margin: 0 0 6px;
+        font-family: "Space Grotesk", system-ui, sans-serif;
+      }
+
+      .lock-card p {
+        margin: 0 0 12px;
+        color: var(--muted);
+      }
+
+      .locked #app {
+        filter: blur(8px);
+        pointer-events: none;
+        user-select: none;
+      }
+
       @media (max-width: 600px) {
         body {
           padding: 20px 12px 32px;
@@ -222,21 +258,37 @@
       }
     </style>
   </head>
-  <body>
-    <header>
-      <h1>FoodFest Ops Dashboard</h1>
-      <p class="subtitle">
-        View and maintain Excel-backed menu and order entries in one place.
-      </p>
-    </header>
+  <body class="locked">
+    <div id="lockScreen" class="lock-screen" aria-label="Password required">
+      <div class="lock-card">
+        <h2>Admin Access</h2>
+        <p>Enter the password to continue.</p>
+        <input
+          id="lockInput"
+          type="password"
+          placeholder="Password"
+          aria-label="Admin password"
+        />
+        <button id="unlockBtn" class="primary">Unlock</button>
+        <div id="lockStatus" class="status"></div>
+      </div>
+    </div>
 
-    <div class="grid">
-      <section class="panel" aria-label="Menu management">
-        <div class="badge">
-          <span>Menu entries</span>
-          <span id="menuMeta" class="pill">Loading...</span>
-        </div>
-        <h2>Menu from Excel</h2>
+    <div id="app">
+      <header>
+        <h1>FoodFest Ops Dashboard</h1>
+        <p class="subtitle">
+          View and maintain Excel-backed menu and order entries in one place.
+        </p>
+      </header>
+
+      <div class="grid">
+        <section class="panel" aria-label="Menu management">
+          <div class="badge">
+            <span>Menu entries</span>
+            <span id="menuMeta" class="pill">Loading...</span>
+          </div>
+          <h2>Menu from Excel</h2>
         <small>Add new items or edit existing ones. Changes are saved back to
           <code>menu-items.xlsx</code>.
         </small>
@@ -289,57 +341,58 @@
           </div>
         </form>
 
-        <table aria-label="Menu table">
-          <thead>
-            <tr>
-              <th>Key</th>
-              <th>Emoji</th>
-              <th>Name</th>
-              <th>Description</th>
-              <th>Max</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody id="menuTableBody">
-            <tr><td colspan="6">Loading menu…</td></tr>
-          </tbody>
-        </table>
-      </section>
+          <table aria-label="Menu table">
+            <thead>
+              <tr>
+                <th>Key</th>
+                <th>Emoji</th>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Max</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="menuTableBody">
+              <tr><td colspan="6">Loading menu…</td></tr>
+            </tbody>
+          </table>
+        </section>
 
-      <section class="panel" aria-label="Orders management">
-        <div class="badge">
-          <span>Orders</span>
-          <span id="ordersMeta" class="pill">Loading...</span>
-        </div>
-        <h2>Orders from Excel</h2>
-        <small>Inspect or clean up orders logged in
-          <code>orders-log.xlsx</code>.
-        </small>
+        <section class="panel" aria-label="Orders management">
+          <div class="badge">
+            <span>Orders</span>
+            <span id="ordersMeta" class="pill">Loading...</span>
+          </div>
+          <h2>Orders from Excel</h2>
+          <small>Inspect or clean up orders logged in
+            <code>orders-log.xlsx</code>.
+          </small>
 
-        <div class="toolbar">
-          <button class="danger" type="button" id="clearOrders">
-            Clear all orders
-          </button>
-          <span class="status" id="ordersStatus"></span>
-        </div>
+          <div class="toolbar">
+            <button class="danger" type="button" id="clearOrders">
+              Clear all orders
+            </button>
+            <span class="status" id="ordersStatus"></span>
+          </div>
 
-        <table aria-label="Orders table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Name</th>
-              <th>Items</th>
-              <th>Total</th>
-              <th>Date Time</th>
-              <th>IP</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody id="ordersTableBody">
-            <tr><td colspan="7">Loading orders…</td></tr>
-          </tbody>
-        </table>
-      </section>
+          <table aria-label="Orders table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Items</th>
+                <th>Total</th>
+                <th>Date Time</th>
+                <th>IP</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="ordersTableBody">
+              <tr><td colspan="7">Loading orders…</td></tr>
+            </tbody>
+          </table>
+        </section>
+      </div>
     </div>
 
     <script>
@@ -354,6 +407,45 @@
 
       let menuCache = [];
       let editingKey = null;
+      let bootstrapped = false;
+
+      function unlockUI() {
+        document.body.classList.remove("locked");
+        document.getElementById("lockScreen").style.display = "none";
+      }
+
+      function bootOnce() {
+        if (bootstrapped) return;
+        bootstrapped = true;
+        loadMenu();
+        loadOrders();
+      }
+
+      async function unlockAdmin() {
+        const input = document.getElementById("lockInput");
+        const status = document.getElementById("lockStatus");
+        const password = input.value;
+        setStatus(status, "Verifying…");
+        try {
+          const res = await fetch("/api/auth", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ password }),
+          });
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.error || "Invalid password");
+          }
+          sessionStorage.setItem("foodfest-admin-unlocked", "1");
+          unlockUI();
+          setStatus(status, "");
+          input.value = "";
+          bootOnce();
+        } catch (error) {
+          setStatus(status, error.message || "Invalid password", "err");
+          input.focus();
+        }
+      }
 
       function setStatus(el, text, type = "") {
         el.textContent = text || "";
@@ -570,8 +662,17 @@
         }
       });
 
-      loadMenu();
-      loadOrders();
+      document.getElementById("unlockBtn").addEventListener("click", unlockAdmin);
+      document
+        .getElementById("lockInput")
+        .addEventListener("keydown", (event) => {
+          if (event.key === "Enter") unlockAdmin();
+        });
+
+      if (sessionStorage.getItem("foodfest-admin-unlocked") === "1") {
+        unlockUI();
+        bootOnce();
+      }
     </script>
   </body>
 </html>
