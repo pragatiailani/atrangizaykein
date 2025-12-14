@@ -34,6 +34,16 @@
         padding: 32px 20px 48px;
       }
 
+      #app {
+        max-width: 1100px;
+        margin: 0 auto;
+      }
+
+      header {
+        max-width: 900px;
+        margin: 0 auto 22px;
+      }
+
       h1 {
         font-family: "Space Grotesk", system-ui, sans-serif;
         letter-spacing: 0.02em;
@@ -61,6 +71,7 @@
         box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4),
           0 0 0 1px rgba(255, 255, 255, 0.03);
         backdrop-filter: blur(16px);
+        overflow: hidden;
       }
 
       .panel h2 {
@@ -71,6 +82,8 @@
 
       .panel small {
         color: var(--muted);
+        display: block;
+        margin-bottom: 8px;
       }
 
       .toolbar {
@@ -150,6 +163,7 @@
         border-collapse: collapse;
         margin-top: 10px;
         font-size: 13px;
+        min-width: 720px;
       }
 
       th,
@@ -247,6 +261,52 @@
         user-select: none;
       }
 
+      .table-wrap {
+        width: 100%;
+        overflow-x: auto;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.01);
+        margin-top: 12px;
+      }
+
+      .table-wrap table {
+        margin: 0;
+        border: none;
+      }
+
+      .table-wrap::-webkit-scrollbar {
+        height: 10px;
+      }
+
+      .table-wrap::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.18);
+        border-radius: 999px;
+      }
+
+      @media (max-width: 900px) {
+        header {
+          margin: 0 0 16px;
+        }
+
+        .toolbar {
+          flex-direction: column;
+          align-items: stretch;
+        }
+
+        .toolbar button {
+          width: 100%;
+        }
+
+        .toolbar .status {
+          order: 3;
+        }
+
+        .actions {
+          flex-wrap: wrap;
+        }
+      }
+
       @media (max-width: 600px) {
         body {
           padding: 20px 12px 32px;
@@ -254,6 +314,14 @@
         th,
         td {
           padding: 8px 6px;
+        }
+
+        h1 {
+          font-size: 24px;
+        }
+
+        .panel {
+          padding: 14px;
         }
       }
     </style>
@@ -288,7 +356,7 @@
             <span>Menu entries</span>
             <span id="menuMeta" class="pill">Loading...</span>
           </div>
-          <h2>Menu from Excel</h2>
+          <h2>Menu</h2>
         <small>Add new items or edit existing ones. Changes are saved back to
           <code>menu-items.xlsx</code>.
         </small>
@@ -354,7 +422,8 @@
           </div>
         </form>
 
-          <table aria-label="Menu table">
+          <div class="table-wrap">
+            <table aria-label="Menu table">
             <thead>
               <tr>
                 <th>Key</th>
@@ -369,7 +438,8 @@
             <tbody id="menuTableBody">
               <tr><td colspan="7">Loading menu…</td></tr>
             </tbody>
-          </table>
+            </table>
+          </div>
         </section>
 
         <section class="panel" aria-label="Orders management">
@@ -377,7 +447,7 @@
             <span>Orders</span>
             <span id="ordersMeta" class="pill">Loading...</span>
           </div>
-          <h2>Orders from Excel</h2>
+          <h2>Orders</h2>
           <small>Inspect or clean up orders logged in
             <code>orders-log.xlsx</code>.
           </small>
@@ -389,7 +459,8 @@
             <span class="status" id="ordersStatus"></span>
           </div>
 
-          <table aria-label="Orders table">
+          <div class="table-wrap">
+            <table aria-label="Orders table">
             <thead>
               <tr>
                 <th>ID</th>
@@ -404,7 +475,8 @@
             <tbody id="ordersTableBody">
               <tr><td colspan="7">Loading orders…</td></tr>
             </tbody>
-          </table>
+            </table>
+          </div>
         </section>
       </div>
     </div>
