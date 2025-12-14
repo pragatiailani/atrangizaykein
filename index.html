@@ -599,14 +599,9 @@
       }
 
       function getRandomPrice(max) {
-        const random = Math.random();
-        if (random < 0.02) return 0; // lucky treat
-        if (random < 0.15) return Math.floor(Math.random() * (max * 0.3));
-        if (random < 0.4)
-          return Math.floor(
-            Math.random() * (max * 0.5 - max * 0.3) + max * 0.3
-          );
-        return Math.floor(Math.random() * (max - max * 0.5) + max * 0.5);
+        const price = Number(max);
+        if (!Number.isFinite(price)) return 0;
+        return Math.max(0, price);
       }
 
       async function fetchUserIP() {
@@ -687,8 +682,11 @@
         // reset canvas to avoid duplicate listeners
         const canvas = document.getElementById("scratchCanvas");
         const newCanvas = canvas.cloneNode(true);
+        newCanvas.style.pointerEvents = "auto"; // ensure fresh canvas is scratchable each time
+        newCanvas.style.cursor = "crosshair";
         canvas.parentNode.replaceChild(newCanvas, canvas);
         const ctx = newCanvas.getContext("2d", { willReadFrequently: true });
+        document.querySelector(".scratch-hint").style.display = "block";
 
         let totalPrice = 0;
         const breakdown = [];
