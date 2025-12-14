@@ -484,6 +484,17 @@
         font-size: 0.9rem;
       }
 
+      .freebie-pill {
+        display: inline-block;
+        margin-left: 6px;
+        padding: 2px 7px;
+        border-radius: 999px;
+        background: rgba(127, 217, 255, 0.14);
+        color: #9ae6ff;
+        font-size: 0.7rem;
+        border: 1px solid rgba(127, 217, 255, 0.3);
+      }
+
       .breakdown-item {
         display: flex;
         justify-content: space-between;
@@ -689,7 +700,7 @@
         document.querySelector(".scratch-hint").style.display = "block";
 
         let totalPrice = 0;
-        const breakdown = [];
+        let breakdown = [];
 
         menuItems.forEach((item) => {
           if (item.qty > 0) {
@@ -701,6 +712,21 @@
 
         const saved = await sendOrderToServer(breakdown, totalPrice);
         if (!saved) return;
+        if (Array.isArray(saved.items)) {
+          breakdown = saved.items;
+        }
+        if (typeof saved.totalPrice === "number") {
+          totalPrice = saved.totalPrice;
+        }
+        const freebiesAwarded = Array.isArray(saved.freebiesAwarded)
+          ? saved.freebiesAwarded
+          : [];
+        const scratchTitleEl = document.querySelector(".scratch-title");
+        if (scratchTitleEl) {
+          scratchTitleEl.textContent = freebiesAwarded.length
+            ? "You caught a freebie! Scratch to reveal your total"
+            : "Scratch to Reveal Your Total Amount";
+        }
 
         // visible cover
         const gradient = ctx.createLinearGradient(
@@ -818,9 +844,13 @@
 
             let breakdownHTML = "";
             breakdown.forEach((item) => {
+              const freebieTag =
+                item.freebiesUsed && item.freebiesUsed > 0
+                  ? '<span class="freebie-pill">Freebie</span>'
+                  : "";
               breakdownHTML += `
                             <div class="breakdown-item">
-                                <span>${item.emoji} ${item.name} × ${item.qty}</span>
+                                <span>${item.emoji} ${item.name} × ${item.qty} ${freebieTag}</span>
                                 <span>₹${item.price}</span>
                             </div>
                         `;

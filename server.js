@@ -9,6 +9,7 @@ const PORT = process.env.PORT || 3000;
 const ORDERS_FILE = path.join(__dirname, "orders-log.xlsx");
 const MENU_FILE = path.join(__dirname, "menu-items.xlsx");
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "";
+const FREEBIE_CHANCE = 0.03; // ~3% per-order chance, keep freebies rare
 
 app.use(express.json());
 app.use(express.static(__dirname));
@@ -54,7 +55,11 @@ function appendOrder(order, req) {
       const perItem = item.qty ? Math.round(item.price / item.qty) : item.price;
       const qty = item.qty || 0;
       const price = item.price || 0;
-      return `${item.name || ""} x${qty} @ Rs${perItem} (Rs${price})`;
+      const freeNote =
+        item.freebiesUsed && item.freebiesUsed > 0
+          ? ` [FREEBIE x${item.freebiesUsed}]`
+          : "";
+      return `${item.name || ""} x${qty} @ Rs${perItem} (Rs${price})${freeNote}`;
     })
     .join("; ");
   const formattedDate = (() => {
@@ -109,6 +114,7 @@ function readMenuFile() {
         name: get("name") || "",
         description: get("description") || "",
         maxPrice: Number(get("maxprice")) || 0,
+        freebiesLeft: Math.max(0, Number(get("freebiesleft")) || 0),
       };
     })
     .filter(Boolean);
@@ -120,7 +126,14 @@ function readMenuFile() {
 }
 
 function writeMenuFile(meta, items) {
-  const headerRow = ["Key", "Emoji", "Name", "Description", "MaxPrice"];
+  const headerRow = [
+    "Key",
+    "Emoji",
+    "Name",
+    "Description",
+    "MaxPrice",
+    "FreebiesLeft",
+  ];
   const aoa = [
     [meta?.stallName || "", meta?.festName || ""],
     headerRow,
@@ -130,6 +143,7 @@ function writeMenuFile(meta, items) {
       item.name || "",
       item.description || "",
       Number(item.maxPrice) || 0,
+      Math.max(0, Number(item.freebiesLeft) || 0),
     ]),
   ];
   const sheet = XLSX.utils.aoa_to_sheet(aoa);
@@ -170,14 +184,99 @@ function writeOrdersFile(rows) {
   XLSX.writeFile(workbook, ORDERS_FILE);
 }
 
+function applyFreebiesToOrderItems(orderItems = []) {
+  const menu = readMenuFile();
+  const nextMenuItems = menu.items.map((item) => ({ ...item }));
+  const freebiesAwarded = [];
+  let menuUpdated = false;
+  let hasGivenFreebieInThisOrder = false;
+
+  const updatedItems = orderItems.map((item) => {
+    const qty = Math.max(0, Number(item.qty) || 0);
+    const menuItem = nextMenuItems.find((m) => m.key === item.key);
+    const freebiesLeft = Math.max(0, Number(menuItem?.freebiesLeft) || 0);
+    const hasQuantity = qty > 0;
+    const baseUnitPrice =
+      Number(menuItem?.maxPrice) ||
+      (qty > 0 ? (Number(item.price) || 0) / qty : 0);
+    const basePrice = qty * baseUnitPrice;
+
+    const shouldGiveFreebie =
+      !hasGivenFreebieInThisOrder &&
+      hasQuantity &&
+      freebiesLeft > 0 &&
+      Math.random() < FREEBIE_CHANCE;
+    const freebiesUsed = shouldGiveFreebie
+      ? Math.min(1, freebiesLeft, qty)
+      : 0;
+
+    let finalPrice = basePrice;
+    if (freebiesUsed > 0) {
+      const discount = freebiesUsed * baseUnitPrice;
+      finalPrice = Math.max(0, basePrice - discount);
+      freebiesAwarded.push({
+        key: item.key,
+        name: item.name || item.key,
+        qty: freebiesUsed,
+      });
+      hasGivenFreebieInThisOrder = true;
+      if (menuItem) {
+        menuItem.freebiesLeft = Math.max(0, freebiesLeft - freebiesUsed);
+        menuUpdated = true;
+      }
+    }
+
+    return {
+      ...item,
+      qty,
+      maxPrice: menuItem?.maxPrice ?? item.maxPrice,
+      price: finalPrice,
+      freebiesUsed,
+    };
+  });
+
+  return {
+    updatedItems,
+    freebiesAwarded,
+    menuUpdated,
+    menuMeta: menu.meta,
+    updatedMenuItems: nextMenuItems,
+  };
+}
+
 app.post("/api/orders", (req, res) => {
   try {
     const payload = req.body || {};
     if (!Array.isArray(payload.items) || payload.items.length === 0) {
       return res.status(400).json({ error: "No items provided" });
     }
-    const result = appendOrder(payload, req);
-    res.json({ ok: true, ...result });
+    const {
+      updatedItems,
+      freebiesAwarded,
+      menuUpdated,
+      menuMeta,
+      updatedMenuItems,
+    } = applyFreebiesToOrderItems(payload.items);
+    const totalPrice = updatedItems.reduce(
+      (sum, item) => sum + (Number(item.price) || 0),
+      0
+    );
+    const orderToPersist = {
+      ...payload,
+      items: updatedItems,
+      totalPrice,
+    };
+    const result = appendOrder(orderToPersist, req);
+    if (menuUpdated) {
+      writeMenuFile(menuMeta, updatedMenuItems);
+    }
+    res.json({
+      ok: true,
+      ...result,
+      items: updatedItems,
+      totalPrice,
+      freebiesAwarded,
+    });
   } catch (error) {
     console.error("Failed to append order", error);
     res.status(500).json({ error: "Failed to record order" });
@@ -253,8 +352,14 @@ app.get("/api/menu", (req, res) => {
 
 app.post("/api/menu", (req, res) => {
   try {
-    const { key, emoji = "", name = "", description = "", maxPrice = 0 } =
-      req.body || {};
+    const {
+      key,
+      emoji = "",
+      name = "",
+      description = "",
+      maxPrice = 0,
+      freebiesLeft = 0,
+    } = req.body || {};
     const safeKey = String(key || "").trim();
     if (!safeKey) {
       return res.status(400).json({ error: "Key is required" });
@@ -269,6 +374,7 @@ app.post("/api/menu", (req, res) => {
       name: String(name || ""),
       description: String(description || ""),
       maxPrice: Number(maxPrice) || 0,
+      freebiesLeft: Math.max(0, Number(freebiesLeft) || 0),
     };
     const nextItems = [...menu.items, newItem];
     writeMenuFile(menu.meta, nextItems);
@@ -298,6 +404,10 @@ app.put("/api/menu/:key", (req, res) => {
         payload.maxPrice !== undefined
           ? Number(payload.maxPrice) || 0
           : menu.items[idx].maxPrice,
+      freebiesLeft:
+        payload.freebiesLeft !== undefined
+          ? Math.max(0, Number(payload.freebiesLeft) || 0)
+          : menu.items[idx].freebiesLeft,
     };
     const nextItems = [...menu.items];
     nextItems[idx] = updated;

@@ -322,6 +322,19 @@
               />
             </div>
           </div>
+          <div class="form-row">
+            <div>
+              <label for="fieldFreebies">Freebies remaining</label>
+              <input
+                id="fieldFreebies"
+                name="freebiesLeft"
+                type="number"
+                min="0"
+                step="1"
+                placeholder="0"
+              />
+            </div>
+          </div>
           <label for="fieldDescription">Description</label>
           <textarea
             id="fieldDescription"
@@ -349,11 +362,12 @@
                 <th>Name</th>
                 <th>Description</th>
                 <th>Max</th>
+                <th>Freebies</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody id="menuTableBody">
-              <tr><td colspan="6">Loading menu…</td></tr>
+              <tr><td colspan="7">Loading menu…</td></tr>
             </tbody>
           </table>
         </section>
@@ -464,7 +478,7 @@
       function renderMenuTable() {
         if (!menuCache.length) {
           menuTableBody.innerHTML =
-            '<tr><td colspan="6">No menu items found.</td></tr>';
+            '<tr><td colspan="7">No menu items found.</td></tr>';
           return;
         }
         menuTableBody.innerHTML = "";
@@ -476,6 +490,7 @@
             <td>${item.name}</td>
             <td>${item.description || ""}</td>
             <td>${item.maxPrice}</td>
+            <td>${item.freebiesLeft ?? 0}</td>
             <td>
               <div class="actions">
                 <button class="secondary" data-action="edit" data-key="${item.key}">Edit</button>
@@ -495,15 +510,19 @@
           const data = await res.json();
           menuCache = data.items || [];
           renderMenuTable();
+          const freebiesCount = (data.items || []).reduce(
+            (sum, item) => sum + (Number(item.freebiesLeft) || 0),
+            0
+          );
           menuMeta.textContent = `${data.meta?.stallName || "Menu"} • ${
             data.items?.length || 0
-          } items`;
+          } items • ${freebiesCount} freebies`;
           setStatus(menuStatus, "");
         } catch (error) {
           console.error(error);
           setStatus(menuStatus, "Could not load menu", "err");
           menuTableBody.innerHTML =
-            '<tr><td colspan="6">Failed to read menu.</td></tr>';
+            '<tr><td colspan="7">Failed to read menu.</td></tr>';
         }
       }
 
@@ -516,6 +535,7 @@
           name: formData.get("name")?.trim(),
           description: formData.get("description")?.trim(),
           maxPrice: Number(formData.get("maxPrice")) || 0,
+          freebiesLeft: Number(formData.get("freebiesLeft")) || 0,
         };
         submitMenuBtn.disabled = true;
         cancelEditBtn.disabled = true;
@@ -556,6 +576,8 @@
         document.getElementById("fieldDescription").value =
           item.description || "";
         document.getElementById("fieldPrice").value = item.maxPrice || "";
+        document.getElementById("fieldFreebies").value =
+          item.freebiesLeft ?? 0;
         submitMenuBtn.textContent = "Update item";
         cancelEditBtn.disabled = false;
         setStatus(menuStatus, `Editing ${item.name || item.key}`);
