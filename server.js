@@ -9,7 +9,14 @@ const PORT = process.env.PORT || 3000;
 const ORDERS_FILE = path.join(__dirname, "orders-log.xlsx");
 const MENU_FILE = path.join(__dirname, "menu-items.xlsx");
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "";
-const FREEBIE_CHANCE = 0.03; // ~3% per-order chance, keep freebies rare
+// Default fallback chance in case Excel does not have a configured value
+const DEFAULT_FREEBIE_CHANCE = (() => {
+  const envVal = Number(process.env.FREEBIE_CHANCE);
+  if (Number.isFinite(envVal)) {
+    return Math.min(1, Math.max(0, envVal));
+  }
+  return 0.03; // ~3% per-order chance, keep freebies rare by default
+})();
 
 app.use(express.json());
 app.use(express.static(__dirname));
@@ -119,10 +126,17 @@ function readMenuFile() {
     })
     .filter(Boolean);
 
-  return {
-    meta: { stallName: metaRow[0] || "", festName: metaRow[1] || "" },
-    items,
+  const meta = {
+    stallName: metaRow[0] || "",
+    festName: metaRow[1] || "",
+    freebieChance: normalizeFreebieChance(
+      metaRow[2] !== undefined && metaRow[2] !== ""
+        ? metaRow[2]
+        : DEFAULT_FREEBIE_CHANCE
+    ),
   };
+
+  return { meta, items };
 }
 
 function writeMenuFile(meta, items) {
@@ -135,7 +149,11 @@ function writeMenuFile(meta, items) {
     "FreebiesLeft",
   ];
   const aoa = [
-    [meta?.stallName || "", meta?.festName || ""],
+    [
+      meta?.stallName || "",
+      meta?.festName || "",
+      normalizeFreebieChance(meta?.freebieChance),
+    ],
     headerRow,
     ...items.map((item) => [
       item.key || "",
@@ -184,12 +202,19 @@ function writeOrdersFile(rows) {
   XLSX.writeFile(workbook, ORDERS_FILE);
 }
 
+function normalizeFreebieChance(value) {
+  const num = Number(value);
+  if (!Number.isFinite(num)) return DEFAULT_FREEBIE_CHANCE;
+  return Math.min(1, Math.max(0, num));
+}
+
 function applyFreebiesToOrderItems(orderItems = []) {
   const menu = readMenuFile();
   const nextMenuItems = menu.items.map((item) => ({ ...item }));
   const freebiesAwarded = [];
   let menuUpdated = false;
   let hasGivenFreebieInThisOrder = false;
+  const freebieChance = normalizeFreebieChance(menu.meta?.freebieChance);
 
   const updatedItems = orderItems.map((item) => {
     const qty = Math.max(0, Number(item.qty) || 0);
@@ -205,7 +230,7 @@ function applyFreebiesToOrderItems(orderItems = []) {
       !hasGivenFreebieInThisOrder &&
       hasQuantity &&
       freebiesLeft > 0 &&
-      Math.random() < FREEBIE_CHANCE;
+      Math.random() < freebieChance;
     const freebiesUsed = shouldGiveFreebie
       ? Math.min(1, freebiesLeft, qty)
       : 0;
@@ -243,6 +268,41 @@ function applyFreebiesToOrderItems(orderItems = []) {
     updatedMenuItems: nextMenuItems,
   };
 }
+
+app.get("/api/freebie-chance", (req, res) => {
+  try {
+    const menu = readMenuFile();
+    res.json({
+      freebieChance: normalizeFreebieChance(
+        menu.meta?.freebieChance ?? DEFAULT_FREEBIE_CHANCE
+      ),
+    });
+  } catch (error) {
+    console.error("Failed to read freebie chance", error);
+    res.status(500).json({ error: "Failed to read freebie chance" });
+  }
+});
+
+app.put("/api/freebie-chance", (req, res) => {
+  try {
+    const { freebieChance } = req.body || {};
+    if (freebieChance === undefined || freebieChance === null) {
+      return res.status(400).json({ error: "freebieChance is required" });
+    }
+    const parsed = Number(freebieChance);
+    if (!Number.isFinite(parsed)) {
+      return res.status(400).json({ error: "Invalid freebieChance" });
+    }
+    const safeChance = normalizeFreebieChance(parsed);
+    const menu = readMenuFile();
+    const nextMeta = { ...menu.meta, freebieChance: safeChance };
+    writeMenuFile(nextMeta, menu.items);
+    res.json({ ok: true, freebieChance: safeChance });
+  } catch (error) {
+    console.error("Failed to update freebie chance", error);
+    res.status(500).json({ error: "Failed to update freebie chance" });
+  }
+});
 
 app.post("/api/orders", (req, res) => {
   try {
