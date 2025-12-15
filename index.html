@@ -527,6 +527,71 @@
           opacity: 0;
         }
       }
+
+      .sad-overlay {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        padding-top: 18px;
+        pointer-events: none;
+        opacity: 0;
+        transform: translateY(-12px) scale(0.98);
+        transition: opacity 0.3s ease, transform 0.32s ease;
+        z-index: 2002;
+      }
+
+      .sad-overlay.visible {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+
+      .sad-card {
+        background: rgba(10, 7, 15, 0.9);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65);
+        padding: 16px 20px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        backdrop-filter: blur(8px);
+        animation: sad-pop 0.9s ease;
+      }
+
+      .sad-emoji {
+        font-size: 34px;
+        animation: wobble 1.2s ease-in-out infinite;
+      }
+
+      .sad-text {
+        font-weight: 600;
+        color: #ff9a7b;
+        letter-spacing: 0.2px;
+      }
+
+      @keyframes sad-pop {
+        0% {
+          transform: scale(0.9);
+        }
+        50% {
+          transform: scale(1.02);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+
+      @keyframes wobble {
+        0%,
+        100% {
+          transform: rotate(-4deg);
+        }
+        50% {
+          transform: rotate(4deg);
+        }
+      }
     </style>
   </head>
   <body>
@@ -573,12 +638,21 @@
       </div>
     </div>
 
+    <audio id="winAudio" preload="auto">
+      <source src="win.mp3" type="audio/mpeg" />
+    </audio>
+    <audio id="failAudio" preload="auto">
+      <source src="fail.mp3" type="audio/mpeg" />
+    </audio>
+
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script>
       const menuListEl = document.getElementById("menuList");
       const orderBtn = document.querySelector(".order-btn");
       const stallNameEl = document.getElementById("stallName");
       const festNameEl = document.getElementById("festName");
+      const winAudio = document.getElementById("winAudio");
+      const failAudio = document.getElementById("failAudio");
       let menuItems = [];
       let userIP = "Unknown";
       let canShowDetails = false;
@@ -607,6 +681,36 @@
             setTimeout(() => confetti.remove(), 3500);
           }, i * 25);
         }
+      }
+
+      function playAudio(el) {
+        if (!el) return;
+        try {
+          el.currentTime = 0;
+          el.volume = 0.75;
+          el.play();
+        } catch (error) {
+          console.warn("Could not play audio", error);
+        }
+      }
+
+      function showSadAnimation(message) {
+        const overlay = document.createElement("div");
+        overlay.className = "sad-overlay";
+        overlay.innerHTML = `
+          <div class="sad-card">
+            <div class="sad-emoji">😔</div>
+            <div class="sad-text">${message}</div>
+          </div>
+        `;
+        document.body.appendChild(overlay);
+        requestAnimationFrame(() => overlay.classList.add("visible"));
+        setTimeout(() => {
+          overlay.classList.remove("visible");
+          overlay.addEventListener("transitionend", () => overlay.remove(), {
+            once: true,
+          });
+        }, 2400);
       }
 
       function getRandomPrice(max) {
@@ -721,11 +825,10 @@
         const freebiesAwarded = Array.isArray(saved.freebiesAwarded)
           ? saved.freebiesAwarded
           : [];
+        const hasFreebie = freebiesAwarded.length > 0;
         const scratchTitleEl = document.querySelector(".scratch-title");
         if (scratchTitleEl) {
-          scratchTitleEl.textContent = freebiesAwarded.length
-            ? "You caught a freebie! Scratch to reveal your total"
-            : "Scratch to Reveal Your Total Amount";
+          scratchTitleEl.textContent = "Scratch to Reveal Your Total Amount";
         }
 
         // visible cover
@@ -840,7 +943,13 @@
             closeBtn.style.display = "inline-block";
             closeBtn.textContent = "View Details";
 
-            createConfetti();
+            if (hasFreebie) {
+              createConfetti();
+              playAudio(winAudio);
+            } else {
+              showSadAnimation("good luck next time, no freebie for you");
+              playAudio(failAudio);
+            }
 
             let breakdownHTML = "";
             breakdown.forEach((item) => {
